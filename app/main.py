@@ -3,6 +3,12 @@ import requests
 import random
 import rasterio
 from rasterio.io import MemoryFile
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 app = FastAPI()
 
@@ -159,7 +165,7 @@ def get_access_token():
 
     response = requests.post(
         url,
-        auth=("sh-45bb7378-ed2f-4f62-819d-7024f5a8c3aa", "gLWbwG6x7P1fp0uVuA0Eyl7blKUbuJlY"),
+        auth=(CLIENT_ID, CLIENT_SECRET),
         data={"grant_type": "client_credentials"}
     )
 
