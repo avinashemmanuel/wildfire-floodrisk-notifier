@@ -5,6 +5,9 @@ import rasterio
 from rasterio.io import MemoryFile
 import os
 from dotenv import load_dotenv
+import joblib
+
+model = joblib.load("model.pkl")
 
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -200,14 +203,17 @@ def get_risk(lat: float = 30.3165, lon: float = 78.0322):
     if temp is None or wind is None or ndvi is None:
         return {"error": "Data not available"}
     
-    if fire_count > 10:
-        risk = "VERY HIGH"
-    elif ndvi < 0.2 and temp > 35 and wind > 10:
-        risk ="HIGH"
-    elif ndvi < 0.3:
-        risk = "MEDIUM"
-    else:
-        risk = "LOW"
+    features = [[
+        temp,
+        wind,
+        fire_count,
+        fire_stats["avg_brightness"],
+        ndvi
+    ]]
+
+    prediction = model.predict(features)[0]
+
+    risk = "HIGH" if prediction == 1 else "LOW"
 
     return {
         "location": {"lat": lat, "lon": lon},
