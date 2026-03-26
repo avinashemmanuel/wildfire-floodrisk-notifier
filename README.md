@@ -9,3 +9,15 @@
 
 ```bash
 uvicorn app.main:app --reload
+
+## ML Model
+
+- Model: XGBoost Classifier
+- Features:
+  - Temperature
+  - Wind Speed
+  - Fire Count
+  - Fire Brightness
+  - NDVI
+- Output:
+  - Risk Prediction (LOW / HIGH)
