@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import joblib
 
 #load data
-df = pd.read_csv("data/processed/dataset.csv")
+df = pd.read_csv("data/processed/real_dataset.csv")
 
 X = df.drop("risk", axis=1)
 y = df["risk"]

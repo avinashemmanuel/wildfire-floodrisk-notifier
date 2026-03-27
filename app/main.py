@@ -6,13 +6,18 @@ from rasterio.io import MemoryFile
 import os
 from dotenv import load_dotenv
 import joblib
+import shap
+import pandas as pd
+import time
 
 model = joblib.load("model.pkl")
+explainer = shap.TreeExplainer(model)
 
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-
+TOKEN = None
+TOKEN_EXPIRY = 0
 app = FastAPI()
 
 
@@ -164,6 +169,13 @@ def process_fire_data(fires):
 
 
 def get_access_token():
+    global TOKEN, TOKEN_EXPIRY
+
+    if TOKEN and time.time() < TOKEN_EXPIRY:
+        return TOKEN
+    
+    print("Fetching new token...")
+
     url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
     response = requests.post(
@@ -173,10 +185,35 @@ def get_access_token():
     )
 
     if response.status_code != 200:
-        print("Token error:", response.text)
+        print("Token error: ", response.text)
         return None
+    
+    data = response.json()
+    
+    TOKEN = data["access_token"]
 
-    return response.json()["access_token"]
+    TOKEN_EXPIRY = time.time() + data["expires_in"] - 60
+
+    return TOKEN
+
+
+def explain_prediction(temp, wind, fire_count, brightness, ndvi):
+    data = pd.DataFrame([{
+        "temperature": temp,
+        "wind_speed": wind,
+        "fire_count": fire_count,
+        "brightness": brightness,
+        "ndvi": ndvi
+    }])
+
+    shap_values = explainer(data)
+
+    explanation = {}
+
+    for i, col in enumerate(data.columns):
+        explanation[col] = round(float(shap_values.values[0][i]), 3)
+
+    return explanation
 
 
 @app.get("/")
@@ -215,12 +252,21 @@ def get_risk(lat: float = 30.3165, lon: float = 78.0322):
 
     risk = "HIGH" if prediction == 1 else "LOW"
 
+    explanation = explain_prediction(
+        temp,
+        wind, 
+        fire_count,
+        fire_stats["avg_brightness"],
+        ndvi
+    )
+
     return {
         "location": {"lat": lat, "lon": lon},
         "weather": weather,
         "fire_data": fire_stats,
         "ndvi": ndvi,
-        "risk": risk
+        "risk": risk,
+        "explanation": explanation
     }
 
 
