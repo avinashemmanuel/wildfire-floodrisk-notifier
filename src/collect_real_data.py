@@ -4,10 +4,10 @@ import random
 
 data = []
 
-#sample multiple locations around uttarakhand
-for _ in range(50):
-    lat = random.uniform(29.5, 31.5)
-    lon = random.uniform(77.5, 79.5)
+for i in range(300):
+
+    lat = random.uniform(25, 35)
+    lon = random.uniform(70, 90)
 
     try:
         response = requests.get(f"http://127.0.0.1:8000/risk?lat={lat}&lon={lon}")
@@ -22,25 +22,50 @@ for _ in range(50):
         brightness = result["fire_data"]["avg_brightness"]
         ndvi = result["ndvi"]
 
-        #temporary label
-        risk = 1 if result["risk"] == "HIGH" else 0
+        # BETTER LABELING LOGIC
+        risk = 1 if (
+            (fire_count > 0 and brightness > 320) or
+            (ndvi < 0.3 and temp > 30 and wind > 6) or
+            (ndvi < 0.2 and temp > 28)
+        ) else 0
 
-        data.append([temp, wind, fire_count, brightness, ndvi, risk])
+        # FEATURE ENGINEERING
+        dryness = (1 - ndvi) * temp
+        fire_intensity = fire_count * brightness
 
-        print(f"Collected: {lat}, {lon}")
+        data.append([
+            temp,
+            wind,
+            fire_count,
+            brightness,
+            ndvi,
+            dryness,
+            fire_intensity,
+            risk
+        ])
 
-    except:
+        print(f"Collected {i}")
+
+    except Exception as e:
+        print("Error:", e)
         continue
 
+# CREATE DATAFRAME
 df = pd.DataFrame(data, columns=[
     "temperature",
     "wind_speed",
     "fire_count",
     "brightness",
     "ndvi",
+    "dryness",
+    "fire_intensity",
     "risk"
 ])
 
-df.to_csv("data/processed/real_collected.csv", index=False)
+# shuffle dataset
+df = df.sample(frac=1).reset_index(drop=True)
 
-print("Real collected dataset created!")
+# SAVE
+df.to_csv("data/processed/balanced_data.csv", index=False)
+
+print("Balanced dataset created!")

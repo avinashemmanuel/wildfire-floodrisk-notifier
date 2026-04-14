@@ -198,12 +198,15 @@ def get_access_token():
 
 
 def explain_prediction(temp, wind, fire_count, brightness, ndvi):
+    dryness = (1 - ndvi) * temp
+
     data = pd.DataFrame([{
         "temperature": temp,
         "wind_speed": wind,
         "fire_count": fire_count,
         "brightness": brightness,
-        "ndvi": ndvi
+        "ndvi": ndvi,
+        "dryness": dryness
     }])
 
     shap_values = explainer(data)
@@ -240,12 +243,15 @@ def get_risk(lat: float = 30.3165, lon: float = 78.0322):
     if temp is None or wind is None or ndvi is None:
         return {"error": "Data not available"}
     
+    dryness = (1 - ndvi) * temp
+
     features = [[
         temp,
         wind,
         fire_count,
         fire_stats["avg_brightness"],
-        ndvi
+        ndvi,
+        dryness
     ]]
 
     prediction = model.predict(features)[0]
@@ -266,6 +272,7 @@ def get_risk(lat: float = 30.3165, lon: float = 78.0322):
         "fire_data": fire_stats,
         "ndvi": ndvi,
         "risk": risk,
+        "dryness": round(dryness, 3),
         "explanation": explanation
     }
 
