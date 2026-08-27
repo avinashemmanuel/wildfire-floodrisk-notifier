@@ -1,0 +1,45 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Data
+data/raw/*
+data/processed/*
+data/external/*
+
+# ML artifacts
+models/*.joblib
+models/*.pkl
+models/*.pickle
+
+# Coverage
+.coverage
+htmlcov/
+
+# OS/editor temporary files
+*.swp
+*.swo
